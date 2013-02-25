@@ -69,6 +69,29 @@ if(!cluster.isMaster) {
 				email: email,
 				invite: invite
 			}) + '\n');
+			fs.readFile(__dirname + '/souprequests.db', 'utf8', function(err, data) {
+				if(err) {
+					console.error(err);
+				} else {
+					try {
+						data = JSON.parse(data);
+					} catch(e) {
+						data = {};
+					}
+					if(typeof data[username] === "undefined") {
+						data[username] = {
+							username: username,
+							email: email,
+							invite: invite
+						}
+						fs.writeFile(__dirname + '/souprequests.db', 'utf8', function(saved) {
+							if(saved) {
+								log.write("souprequests.db saved sucessfully"); // TODO: Do something different here ;_;
+							}
+						});
+					}
+				}
+			});
 			return res.sendfile(__dirname + 'html/okay.html');
 		});
 	}
