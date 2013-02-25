@@ -28,7 +28,7 @@ if(!cluster.isMaster) {
 		});
 
 		app.get('/', function(req, res) {
-			return res.sendfile(__dirname + 'html/index.html');
+			return res.sendfile(__dirname + '/html/index.html');
 		});
 		app.post('/lel', function(req, res) {
 			var key,
@@ -92,13 +92,13 @@ if(!cluster.isMaster) {
 					}
 				}
 			});
-			return res.sendfile(__dirname + 'html/okay.html');
+			return res.sendfile(__dirname + '/html/okay.html');
 		});
 	}
 
 	var httpServer = express();
 	register_app(httpServer);
-	httpServer.listen(9991);
+	httpServer.listen(80);
 } else {
 	/*
 	 * HERE BE FORKING SHIT
