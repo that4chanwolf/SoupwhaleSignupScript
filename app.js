@@ -133,11 +133,18 @@ if(!cluster.isMaster) {
 				rl.prompt();
 				break;
 			case 'invites':
-				for(var item in db) {
-					console.log(item + "\n |");
-					db[item].forEach(function(code) {
+				if(args[0] && db[args[0]]) {
+					console.log(args[0] + "\n |");
+					db[args[0]].forEach(function(code) {
 						console.log(" `-- " + code);
 					});
+				} else {
+					for(var item in db) {
+						console.log(item + "\n |");
+						db[item].forEach(function(code) {
+							console.log(" `-- " + code);
+						});
+					}
 				}
 				rl.prompt();
 				break;
