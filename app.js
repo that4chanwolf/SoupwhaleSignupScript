@@ -1,11 +1,11 @@
 var express  = require('express'),
     colors   = require('colors'),
     http     = require('http'),
-    https    = require('https'),
     fs       = require('fs'),
     os       = require('os'),
     cluster  = require('cluster'),
     readline = require('readline'),
+    cproc    = require('child_process'),
     code     = require('./lib/code');
 
 var log = fs.createWriteStream(__dirname + '/soupwhale.log', {
@@ -64,35 +64,55 @@ if(!cluster.isMaster) {
 						break;
 				}
 			}
-			log.write("New submission: " + JSON.stringify({
-				username: username,
-				email: email,
-				invite: invite
-			}) + '\n');
-			fs.readFile(__dirname + '/souprequests.db', 'utf8', function(err, data) {
+			fs.readFile(__dirname + '/soupinvites.db', 'utf8', function(err, data) {
 				if(err) {
-					console.error(err);
+					res.write(err + '\n');
+					return res.end();
 				} else {
-					try {
-						data = JSON.parse(data);
-					} catch(e) {
-						data = {};
-					}
-					if(typeof data[username] === "undefined") {
-						data[username] = {
-							username: username,
-							email: email,
-							invite: invite
-						}
-						fs.writeFile(__dirname + '/souprequests.db', 'utf8', function(saved) {
-							if(saved) {
-								log.write("souprequests.db saved sucessfully"); // TODO: Do something different here ;_;
-							}
+					data = JSON.parse(data);
+					if(Object.keys(data).length === 0) { // Nobody in the DB === nobody has an invite code
+						return res.status(500).json({
+							error: "Invite key invalid"
 						});
+					} else {
+						var invitee, invites, invited = false;
+						for(var user in data) {
+							invites = data[user];
+							if(invites.indexOf(invite) !== -1) {
+								invitee = user;
+								invited = true;
+								data[user].splice(invites.indexOf(invite), 1);
+								break;
+							} else {
+								continue;
+							}
+						}
+						if(invited) {
+							var db = JSON.parse(fs.readFileSync(__dirname + '/souprequests.db', 'utf8'));
+							if(typeof db[username] === "undefined") {
+								db[username] = {
+									username: username.trim().toLowerCase(),
+									email: email.trim(),
+									invitee: invitee
+								}
+								var dbfile = fs.createWriteStream(__dirname + '/souprequests.db'),
+								    invitefile = fs.createWriteStream(__dirname + '/soupinvites.db');
+								dbfile.write(JSON.stringify(db));
+								invitefile.write(JSON.stringify(data));
+								return res.sendfile(__dirname + '/html/okay.html');
+							} else {
+								res.json({
+									error: "Already invited"
+								});
+							}
+						} else {
+							res.json({
+								error: "Invite key not valid"
+							});
+						}
 					}
 				}
 			});
-			return res.sendfile(__dirname + '/html/okay.html');
 		});
 	}
 
@@ -184,14 +204,27 @@ if(!cluster.isMaster) {
 									db[args[0].trim()] = [];
 								}
 								db[args[0].trim()].push(code.code_generator());
-								fs.writeFileSync(__dirname + '/soupinvites.db', JSON.stringify(db, null, '\t'));
-								rl.setPrompt(prompt, prompt.stripColors.length); // Because apparently this is fucking needed. Why? I don't know. I barely understand this shit.
-								rl.prompt();
 							}
-						} else {
-							rl.prompt();
+							var invitefile = fs.createWriteStream(__dirname + '/soupinvites.db')
+							invitefile.write(JSON.stringify(db));
 						}
+						rl.setPrompt(prompt, prompt.stripColors.length); // Because apparently this is fucking needed. Why? I don't know. I barely understand this shit.
+						rl.prompt();
 					});
+				}
+				break;
+			case 'remove':
+				if(!args[0] || !args[1] || Number.isNaN(args[1])) {
+					console.error("ERROR".red + ": Not enough arguments specified");
+					rl.prompt();
+				} else {
+					db[args[0].trim()].splice(0, Number(args[1]));
+					if(db[args[0]].length === 0) {
+						delete db[args[0]];
+					}
+					var invitefile = fs.createWriteStream(__dirname + '/soupinvites.db');
+					invitefile.write(JSON.stringify(db));
+					rl.prompt();
 				}
 				break;
 			case 'quit':
