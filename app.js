@@ -1,5 +1,6 @@
 var express  = require('express'),
     colors   = require('colors'),
+    ap       = require('argparser').vals("add-user-script").parse()
     http     = require('http'),
     fs       = require('fs'),
     os       = require('os'),
@@ -100,6 +101,16 @@ if(!cluster.isMaster) {
 								dbfile.write(JSON.stringify(db));
 								invitefile.write(JSON.stringify(data));
 								return res.sendfile(__dirname + '/html/okay.html');
+								fs.exists(ap.opt("add-user-script"), function(exists) {
+									if(exists) {
+										var aus = cproc.spawn(ap.opt("add-user-script"), [ db[username]["username"] ]);
+										aus.on('exit', function(code) {
+											return log.write('The add user script `' + ap.opt("add-user-script") + '` exited with a code of ' + code + '\n');
+										});
+									} else {
+									
+									}
+								});
 							} else {
 								res.json({
 									error: "Already invited"
