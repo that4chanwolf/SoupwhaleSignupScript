@@ -1,14 +1,12 @@
-var express    = require('express'),
-    colors     = require('colors'),
-    ap         = require('argparser').vals("add-user-script").parse()
-    http       = require('http'),
-    fs         = require('fs'),
-    os         = require('os'),
-    cluster    = require('cluster'),
-    readline   = require('readline'),
-    cproc      = require('child_process'),
-    code       = require('./lib/code'),
-    regist_app = require('./lib/register');
+var express      = require('express'),
+    colors       = require('colors'),
+    ap           = require('argparser').vals("add-user-script").parse()
+    http         = require('http'),
+    fs           = require('fs'),
+    cluster      = require('cluster'),
+    readline     = require('readline'),
+    code         = require('./lib/code'),
+    register_app = require('./lib/register');
 
 var log = fs.createWriteStream(__dirname + '/soupwhale.log', {
 	flags: 'a'
@@ -31,7 +29,7 @@ if(!cluster.isMaster) {
 	/*
 	 * HERE BE FORKING SHIT
 	 */
-	os.cpus().forEach(function() {
+	require('os').cpus().forEach(function() {
 		cluster.fork();
 	});
 
@@ -68,7 +66,7 @@ if(!cluster.isMaster) {
 				"\t`add` - Gives a user invite codes\n" +
 				"\t`generate` - Generates a specified ammount of random invite codes for samples\n" +
 				"\t`invites` - Lists every user and the invite codes they have\n" +
-				"\t`list` - Lists every person who needs an invite\n" +
+				"\t`list` - Lists every person who has been invited\n" +
 				"\t`quit` - Exits");
 				rl.prompt();
 				break;
@@ -91,10 +89,12 @@ if(!cluster.isMaster) {
 					});
 				} else {
 					for(var item in db) {
-						console.log(item + "\n |");
-						db[item].forEach(function(code) {
-							console.log(" `-- " + code);
-						});
+						if(db[item].length !== 0) {
+							console.log(item + "\n |");
+							db[item].forEach(function(code) {
+								console.log(" `-- " + code);
+							});
+						}
 					}
 				}
 				rl.prompt();
@@ -134,6 +134,18 @@ if(!cluster.isMaster) {
 					invitefile.write(JSON.stringify(db));
 					rl.prompt();
 				}
+				break;
+			case 'list':
+				var dbfile = fs.createReadStream(__dirname + '/souprequests.db'),
+				    db = JSON.parse(dbfile.read()),
+				    current;
+				for(var item in db) {
+					current = db[item];
+					console.log("User: `" + current.username + "`");
+					console.log("Email: `"+ current.email + "`");
+					console.log("Invitee: `"+ current.invitee + "`");
+				}
+				rl.prompt();
 				break;
 			case 'quit':
 				process.exit(0);
