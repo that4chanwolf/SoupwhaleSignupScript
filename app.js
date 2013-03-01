@@ -19,12 +19,18 @@ if(!fs.existsSync(ap.opt("add-user-script"))) {
 
 // If we're not the master process, let's spawn an HTTP server!
 if(!cluster.isMaster) {
+	var port;
+	if(Number.isNaN(ap.opt("port"))) {
+		port = 80;
+	} else {
+		port = Number(ap.opt("port"));
+	}
 	/*
 	 * HERE BE HTTP SHIT
 	 */
 	var httpServer = express();
 	register_app(httpServer, __dirname, ap.opt("add-user-script"));
-	httpServer.listen(80);
+	httpServer.listen(port);
 } else {
 	/*
 	 * HERE BE FORKING SHIT
