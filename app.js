@@ -33,7 +33,6 @@ if(!cluster.isMaster) {
 		cluster.fork();
 	});
 
-	var db = JSON.parse(fs.readFileSync(__dirname + '/soupinvites.db', 'utf8').trim());
 
 	/*
 	 * HERE BE COMMAND LINE SHIT
@@ -53,6 +52,7 @@ if(!cluster.isMaster) {
 	rl.setPrompt(prompt, prompt.stripColors.length);
 
 	rl.on('line', function(line) {
+		var db = JSON.parse(fs.readFileSync(__dirname + '/soupinvites.db', 'utf8').trim());
 		var command, args;
 
 		args = line.split(" ");
@@ -136,8 +136,7 @@ if(!cluster.isMaster) {
 				}
 				break;
 			case 'list':
-				var dbfile = fs.createReadStream(__dirname + '/souprequests.db'),
-				    db = JSON.parse(dbfile.read()),
+				var db = JSON.parse(fs.readFileSync(__dirname + '/souprequests.db', 'utf8')),
 				    current;
 				for(var item in db) {
 					current = db[item];
