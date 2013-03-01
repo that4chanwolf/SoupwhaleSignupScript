@@ -23,7 +23,7 @@ if(!cluster.isMaster) {
 	 * HERE BE HTTP SHIT
 	 */
 	var httpServer = express();
-	register_app(httpServer);
+	register_app(httpServer, __dirname);
 	httpServer.listen(80);
 } else {
 	/*
