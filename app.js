@@ -1,6 +1,6 @@
 var express      = require('express'),
     colors       = require('colors'),
-    ap           = require('argparser').vals("add-user-script").parse()
+    ap           = require('argparser').vals("add-user-script").nums("port").parse()
     http         = require('http'),
     fs           = require('fs'),
     cluster      = require('cluster'),
@@ -20,7 +20,7 @@ if(!fs.existsSync(ap.opt("add-user-script"))) {
 // If we're not the master process, let's spawn an HTTP server!
 if(!cluster.isMaster) {
 	var port;
-	if(Number.isNaN(ap.opt("port"))) {
+	if(!ap.opt("port")) {
 		port = 80;
 	} else {
 		port = Number(ap.opt("port"));
