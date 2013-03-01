@@ -13,6 +13,11 @@ var log = fs.createWriteStream(__dirname + '/soupwhale.log', {
 	flags: 'a'
 });
 
+if(!fs.existsSync(ap.opt("add-user-script"))) {
+	console.error("ERROR".red + ": add-user-script not specified, aborting.");
+	process.exit(1);
+}
+
 // If we're not the master process, let's spawn an HTTP server!
 if(!cluster.isMaster) {
 	/*
@@ -38,7 +43,7 @@ if(!cluster.isMaster) {
 				key = req["body"][item];
 				switch(item) {
 					case 'username':
-						if(key === '') {
+						if(key === '' || !/[a-z]/i.test(key) || !/^[a-z]/i.test(key)) {
 							return res.status(404).json({
 								error: "Username not submitted"
 							});
@@ -101,15 +106,9 @@ if(!cluster.isMaster) {
 								dbfile.write(JSON.stringify(db));
 								invitefile.write(JSON.stringify(data));
 								return res.sendfile(__dirname + '/html/okay.html');
-								fs.exists(ap.opt("add-user-script"), function(exists) {
-									if(exists) {
-										var aus = cproc.spawn(ap.opt("add-user-script"), [ db[username]["username"] ]);
-										aus.on('exit', function(code) {
-											return log.write('The add user script `' + ap.opt("add-user-script") + '` exited with a code of ' + code + '\n');
-										});
-									} else {
-									
-									}
+								var aus = cproc.spawn(ap.opt("add-user-script"), [ db[username]["username"] ]);
+								aus.on('exit', function(code) {
+									return log.write('The add user script `' + ap.opt("add-user-script") + '` exited with a code of ' + code + '\n');
 								});
 							} else {
 								res.json({
