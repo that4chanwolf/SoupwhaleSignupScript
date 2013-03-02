@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var express      = require('express'),
     colors       = require('colors'),
     ap           = require('argparser').vals("add-user-script").nums("port").parse()
@@ -73,6 +74,7 @@ if(!cluster.isMaster) {
 				"\t`generate` - Generates a specified ammount of random invite codes for samples\n" +
 				"\t`invites` - Lists every user and the invite codes they have\n" +
 				"\t`list` - Lists every person who has been invited\n" +
+				"\t`accept` - Accepts a person on the `invited`	 list\n" +
 				"\t`quit` - Exits");
 				rl.prompt();
 				break;
