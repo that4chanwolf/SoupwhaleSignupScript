@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var express      = require('express'),
     colors       = require('colors'),
     ap           = require('argparser').vals("add-user-script").nums("port").parse()
