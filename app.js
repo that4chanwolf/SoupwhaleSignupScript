@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 var express      = require('express'),
     colors       = require('colors'),
-    ap           = require('argparser').vals("add-user-script").nums("port").parse()
+    ap           = require('argparser').vals("add-user-script").nums("port").nonvals("headless").parse(),
     http         = require('http'),
     fs           = require('fs'),
+    path         = require('path'),
     cluster      = require('cluster'),
     readline     = require('readline'),
     code         = require('./lib/code'),
@@ -14,7 +15,7 @@ var log = fs.createWriteStream(__dirname + '/soupwhale.log', {
 });
 
 if(!fs.existsSync(ap.opt("add-user-script"))) {
-	console.error("ERROR".red + ": add-user-script not specified, aborting.");
+	console.error("ERROR".red + ": --add-user-script not specified, aborting.");
 	process.exit(1);
 }
 
@@ -30,7 +31,7 @@ if(!cluster.isMaster) {
 	 * HERE BE HTTP SHIT
 	 */
 	var httpServer = express();
-	register_app(httpServer, __dirname, ap.opt("add-user-script"));
+	register_app(httpServer, __dirname);
 	httpServer.listen(port);
 } else {
 	/*
@@ -40,6 +41,10 @@ if(!cluster.isMaster) {
 		cluster.fork();
 	});
 
+
+	if(!!ap.opt("headless")) {
+		return; // xX_360_nO_iNtErFaCe_Xx
+	}
 
 	/*
 	 * HERE BE COMMAND LINE SHIT
