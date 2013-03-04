@@ -1,0 +1,15 @@
+{
+	"name": "SoupwhaleSignupScript",
+	"version": "0.3.0",
+	"author": "that4chanwolf <that4chanwolf@gmail.com>",
+	"description": "The soupwhale.com invite script",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/that4chanwolf/SoupwhaleSignupScript.git"
+	},
+	"dependencies": {
+		"express": "*",
+		"argparser": "*",
+		"colors": "*"
+	}
+}
