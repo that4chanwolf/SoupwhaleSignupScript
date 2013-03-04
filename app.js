@@ -129,6 +129,7 @@ if(!cluster.isMaster) {
 							}
 							var invitefile = fs.createWriteStream(__dirname + '/soupinvites.db')
 							invitefile.write(JSON.stringify(db));
+							invitefile.end();
 						}
 						rl.setPrompt(prompt, prompt.stripColors.length); // Because apparently this is fucking needed. Why? I don't know. I barely understand this shit.
 						rl.prompt();
@@ -146,6 +147,7 @@ if(!cluster.isMaster) {
 					}
 					var invitefile = fs.createWriteStream(__dirname + '/soupinvites.db');
 					invitefile.write(JSON.stringify(db));
+					invitefile.end();
 					rl.prompt();
 				}
 				break;
