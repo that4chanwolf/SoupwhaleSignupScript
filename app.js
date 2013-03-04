@@ -51,7 +51,7 @@ if(!cluster.isMaster) {
 	 * HERE BE COMMAND LINE SHIT
 	 */
 	var rl = readline.createInterface(process.stdin, process.stdout, function completer(line) {
-		var completions = 'help add generate invites list quit accept'.split(' '),
+		var completions = 'help add generate invites list quit accept deny'.split(' '),
 		hits = completions.filter(function(c) {
 			if (c.indexOf(line) == 0) {
 				return c;
@@ -81,6 +81,7 @@ if(!cluster.isMaster) {
 				"\t`invites` - Lists every user and the invite codes they have\n" +
 				"\t`list` - Lists every person who has been invited\n" +
 				"\t`accept` - Accepts a person into soupwhale\n" +
+				"\t`deny` - Denies a person from getting into soupwhale\n" +
 				"\t`quit` - Exits");
 				rl.prompt();
 				break;
@@ -180,11 +181,27 @@ if(!cluster.isMaster) {
 								console.log('add-user-script exited with a status code of ' + code);
 								rl.prompt();
 							});
+							delete db[args[0]];
+							var dbfile = fs.createWriteStream(__dirname + '/souprequests.db');
+							dbfile.write(JSON.stringify(db));
+							dbfile.end();
 						}
 					});
 				} else {
 					console.error("ERROR".red + ": User " + args[0] + " not in database");
 				}
+				break;
+			case 'deny':
+				var db = JSON.parse(fs.readFileSync(__dirname + '/souprequests.db', 'utf8'));
+				if(db[args[0]]) {
+					delete db[args[0]];
+					var dbfile = fs.createWriteStream(__dirname + '/souprequests');
+					dbfile.write(JSON.stringify(db));
+					dbfile.end();
+				} else {
+					console.error("ERROR".red + ": User " + args[0] + " not in database");
+				}
+				rl.prompt();
 				break;
 			case 'quit':
 				process.exit(0);
