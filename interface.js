@@ -3,7 +3,9 @@ var fs           = require('fs'),
     readline     = require('readline'),
     code         = require('./lib/code'),
     colors       = require('colors'),
-    ap           = require('argparser').vals("add-user-script").nums("port").nonvals("headless").parse();
+    cproc        = require('child_process'),
+    path         = require('path'),
+    ap           = require('argparser').vals("add-user-script").parse();
 
 if(!fs.existsSync(ap.opt("add-user-script"))) {
 	console.error("ERROR".red + ": --add-user-script not specified, aborting.");
@@ -14,7 +16,7 @@ if(!fs.existsSync(ap.opt("add-user-script"))) {
  * HERE BE COMMAND LINE SHIT
  */
 var rl = readline.createInterface(process.stdin, process.stdout, function completer(line) {
-	var completions = 'help add generate invites list quit'.split(' '),
+	var completions = 'help add generate invites list quit accept'.split(' '),
 	hits = completions.filter(function(c) {
 		if (c.indexOf(line) == 0) {
 			return c;
@@ -43,6 +45,7 @@ rl.on('line', function(line) {
 			"\t`generate` - Generates a specified ammount of random invite codes for samples\n" +
 			"\t`invites` - Lists every user and the invite codes they have\n" +
 			"\t`list` - Lists every person who has been invited\n" +
+			"\t`accept` - Accepts a person into soupwhale\n" +
 			"\t`quit` - Exits");
 			rl.prompt();
 			break;
@@ -81,7 +84,7 @@ rl.on('line', function(line) {
 				rl.prompt();
 			} else {
 				rl.question("Are you sure you want to give `" + args[0].trim() + "` " + args[1] + " invites? (y/n): ", function(answer) {
-					answer = answer[0].toLowerCase();
+					answer = answer.toLowerCase().trim()[0];
 					if(answer === 'y') {
 						for(var i = 0; i < Number(args[1]); i++) {
 							if(typeof db[args[0].trim()] === 'undefined') {
@@ -121,6 +124,30 @@ rl.on('line', function(line) {
 				console.log("Invitee: `"+ current.invitee + "`");
 			}
 			rl.prompt();
+			break;
+		case 'accept':
+			var db = JSON.parse(fs.readFileSync(__dirname + '/souprequests.db', 'utf8'));
+			if(db[args[0]]) {
+				rl.question("Are you sure you want to accept " + args[0].trim() + " to soupwhale? (y/n): ", function(answer) {
+					answer = answer.toLowerCase().trim()[0];
+					if(answer === 'y') {
+						rl.setPrompt(prompt, prompt.stripColors.length);
+						var aus = cproc.spawn(path.resolve(ap.opt("add-user-script")), [ args[0].trim().toLowerCase() ]);
+						aus.stdout.on('data', function(data) {
+							console.log(data.toString());
+						});
+						aus.stderr.on('data', function(data) {
+							console.error(data.toString());
+						});
+						aus.on('exit', function(code) {
+							console.log('add-user-script exited with a status code of ' + code);
+							rl.prompt();
+						});
+					}
+				});
+			} else {
+				console.error("ERROR".red + ": User " + args[0] + " not in database");
+			}
 			break;
 		case 'quit':
 			process.exit(0);

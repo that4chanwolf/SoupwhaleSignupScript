@@ -7,6 +7,7 @@ var express      = require('express'),
     path         = require('path'),
     cluster      = require('cluster'),
     readline     = require('readline'),
+    cproc        = require('child_process'),
     code         = require('./lib/code'),
     register_app = require('./lib/register');
 
@@ -50,7 +51,7 @@ if(!cluster.isMaster) {
 	 * HERE BE COMMAND LINE SHIT
 	 */
 	var rl = readline.createInterface(process.stdin, process.stdout, function completer(line) {
-		var completions = 'help add generate invites list quit'.split(' '),
+		var completions = 'help add generate invites list quit accept'.split(' '),
 		hits = completions.filter(function(c) {
 			if (c.indexOf(line) == 0) {
 				return c;
@@ -79,6 +80,7 @@ if(!cluster.isMaster) {
 				"\t`generate` - Generates a specified ammount of random invite codes for samples\n" +
 				"\t`invites` - Lists every user and the invite codes they have\n" +
 				"\t`list` - Lists every person who has been invited\n" +
+				"\t`accept` - Accepts a person into soupwhale\n" +
 				"\t`quit` - Exits");
 				rl.prompt();
 				break;
@@ -157,6 +159,30 @@ if(!cluster.isMaster) {
 					console.log("Invitee: `"+ current.invitee + "`");
 				}
 				rl.prompt();
+				break;
+			case 'accept':
+				var db = JSON.parse(fs.readFileSync(__dirname + '/souprequests.db', 'utf8'));
+				if(db[args[0]]) {
+					rl.question("Are you sure you want to accept " + args[0].trim() + " to soupwhale? (y/n): ", function(answer) {
+						answer = answer.toLowerCase().trim()[0];
+						if(answer === 'y') {
+							rl.setPrompt(prompt, prompt.stripColors.length);
+							var aus = cproc.spawn(path.resolve(ap.opt("add-user-script")), [ args[0].trim().toLowerCase() ]);
+							aus.stdout.on('data', function(data) {
+								console.log(data.toString());
+							});
+							aus.stderr.on('data', function(data) {
+								console.error(data.toString());
+							});
+							aus.on('exit', function(code) {
+								console.log('add-user-script exited with a status code of ' + code);
+								rl.prompt();
+							});
+						}
+					});
+				} else {
+					console.error("ERROR".red + ": User " + args[0] + " not in database");
+				}
 				break;
 			case 'quit':
 				process.exit(0);
